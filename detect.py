@@ -9,37 +9,63 @@ mask_model = load_model('model/kaggle/working/mask_model')
 
 f_cascade = cv.CascadeClassifier(cv.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
+IMG_SIZE = 500
 
 class MaskDetector():
+    """
+        Parameters:
+        from_ : string : Takes in two arguments: 'image' (detecting from an image) and 'video' (detecting from your webcam)
+        img_path: string : If from_='image', provide the image path to your image
+    """
     
-    def __init__(self,):
-         pass
+    def __init__(self, from_='video', img_path=None):
+        self.from_ = from_
+        self.img_path = img_path
     
     def detect_mask(self):
         
-#         img_file = path_to_img_file
-
-        cam_capture = cv.VideoCapture(0)
-        
-        while True:
-            ret, frame = cam_capture.read()
-
-            faces = MaskDetector.detect_faces(frame)
+        if self.from_ == 'image':
+            img_path = self.img_path
+            img = cv.imread(img_path)
+            
+            faces = MaskDetector.detect_faces(img)
 
             for face in faces:
                 x,y,w,h = face
-                roi = frame[y:y+h, x:x+w]
-#                 cv.imshow('ROI', roi)
+                roi = img[y:y+h, x:x+w]
                 mask_prob = MaskDetector.predict_image_with_mask(roi, mask_model) 
-                frame = MaskDetector.draw_bounding_box(frame, face, mask_prob)
-        
-            cv.imshow('Face', frame)
+                frame = MaskDetector.draw_bounding_box(img, face, mask_prob)
             
-            if cv.waitKey(1) & 0xff == ord('q'):
-                break
+            if img.shape[0] > 700 or img.shape[1] > 700:
+                img = cv.resize(img, dsize=None, fx=0.5, fy=0.5, interpolation=cv.INTER_AREA)
+            if img.shape[0] < 350 or img.shape[1] > 350:    
+                img = cv.resize(img, dsize=None, fx=2, fy=2, interpolation=cv.INTER_AREA)
                 
-        cam_capture.release()
-        cv.destroyAllWindows()
+            cv.imshow('Face', img)
+            
+            if cv.waitKey(0) & 0xff == ord('q'):
+                cv.destroyAllWindows()
+
+        elif self.from_ == 'video':
+            cam_capture = cv.VideoCapture(0)
+
+            while True:
+                ret, frame = cam_capture.read()
+
+                faces = MaskDetector.detect_faces(frame)
+
+                for face in faces:
+                    x,y,w,h = face
+                    roi = frame[y:y+h, x:x+w]
+                    mask_prob = MaskDetector.predict_image_with_mask(roi, mask_model) 
+                    frame = MaskDetector.draw_bounding_box(frame, face, mask_prob)
+                cv.imshow('Face', frame)
+
+                if cv.waitKey(1) & 0xff == ord('q'):
+                    break
+
+            cam_capture.release()
+            cv.destroyAllWindows()
             
     def preprocess_image(img):
         img_arr = img_to_array(img)
@@ -76,8 +102,9 @@ class MaskDetector():
         cv.rectangle(frame, (x,y), (x+w, y+h), color, thickness=1)
         cv.putText(frame, f'{text} {round(disp_prob*100, 2)}%', (x, y-10), cv.FONT_HERSHEY_SIMPLEX, fontScale=0.35, color=color, thickness=1, lineType=cv.LINE_AA, bottomLeftOrigin=False)
         return frame
-     
-        
+    
+    
+    
 if __name__ == '__main__':
     mask_detector = MaskDetector()
-    mask_detector.detect_mask()
+    mask_detector = MaskDetector.detect_mask()
