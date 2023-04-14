@@ -107,4 +107,4 @@ class MaskDetector():
     
 if __name__ == '__main__':
     mask_detector = MaskDetector()
-    mask_detector = MaskDetector.detect_mask()
+    mask_detector.detect_mask()
