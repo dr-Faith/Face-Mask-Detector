@@ -3,6 +3,7 @@ import os
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array, load_img
 import numpy as np
+import argparse
 
 
 mask_model = load_model('model/kaggle/working/mask_model')
@@ -105,6 +106,14 @@ class MaskDetector():
     
     
     
-if __name__ == '__main__':
-    mask_detector = MaskDetector()
-    mask_detector.detect_mask()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--read_from", default="video", type=str)
+    args = parser.parse_args()
+    if args.read_from == 'video':
+        mask_detector = MaskDetector()
+        mask_detector.detect_mask()
+    elif args.read_from == 'image':
+        parser.add_argument("--input", default='test-images/test-4.jpg', type=str)
+        mask_detector = MaskDetector(from_='image', img_path=args.input)
+        mask_detector.detect_mask()
